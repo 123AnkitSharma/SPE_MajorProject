@@ -16,10 +16,21 @@ export const AuthProvider = ({ children }) => {
           const base64Url = token.split('.')[1];
           const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
           const payload = JSON.parse(window.atob(base64));
-          // Fetch user data including name from the server
+          
+          // Fetch user data including name and status from the server
           const res = await axios.get(`http://localhost:5000/api/users/${payload.id}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
+          
+          // Check if user status is active
+          if (res.data.status === 'inactive') {
+            // If inactive, log out the user
+            localStorage.removeItem('token');
+            localStorage.removeItem('role');
+            setUser(null);
+            return;
+          }
+          
           // Set user data including name
           setUser({ 
             id: payload.id, 

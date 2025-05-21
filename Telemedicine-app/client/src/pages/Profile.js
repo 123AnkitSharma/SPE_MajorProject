@@ -6,6 +6,7 @@ import {
   Button, FormControl, InputLabel, Select, MenuItem,
   Snackbar, Alert, CircularProgress
 } from '@mui/material';
+
 export default function Profile() {
   const { user } = useAuth();
   const [profile, setProfile] = useState({
@@ -15,12 +16,14 @@ export default function Profile() {
     gender: '',
     phone: '',
     address: '',
+    bloodGroup: '',
     specialization: '',
     license: ''
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [alert, setAlert] = useState({ open: false, message: '', severity: 'success' });
+
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) return;
@@ -36,6 +39,7 @@ export default function Profile() {
           gender: res.data.profile?.gender || '',
           phone: res.data.profile?.phone || '',
           address: res.data.profile?.address || '',
+          bloodGroup: res.data.profile?.bloodGroup || '',
           specialization: res.data.profile?.specialization || '',
           license: res.data.profile?.license || ''
         });
@@ -52,12 +56,14 @@ export default function Profile() {
     };
     fetchProfile();
   }, [user]);
+
   const handleChange = (e) => {
     setProfile({
       ...profile,
       [e.target.name]: e.target.value
     });
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -70,6 +76,7 @@ export default function Profile() {
           gender: profile.gender,
           phone: profile.phone,
           address: profile.address,
+          bloodGroup: profile.bloodGroup,
           specialization: profile.specialization,
           license: profile.license
         }
@@ -92,9 +99,11 @@ export default function Profile() {
       setSaving(false);
     }
   };
+
   const handleCloseAlert = () => {
     setAlert({ ...alert, open: false });
   };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
@@ -102,6 +111,7 @@ export default function Profile() {
       </Box>
     );
   }
+
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
       <Paper sx={{ p: 3 }}>
@@ -140,14 +150,19 @@ export default function Profile() {
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Gender</InputLabel>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="gender-label">Gender</InputLabel>
                 <Select
+                  labelId="gender-label"
+                  id="gender-select"
                   name="gender"
-                  value={profile.gender}
+                  value={profile.gender || ""}
                   label="Gender"
                   onChange={handleChange}
                 >
+                  <MenuItem value="">
+                    <em>Select Gender</em>
+                  </MenuItem>
                   <MenuItem value="male">Male</MenuItem>
                   <MenuItem value="female">Female</MenuItem>
                   <MenuItem value="other">Other</MenuItem>
@@ -172,7 +187,31 @@ export default function Profile() {
                 onChange={handleChange}
               />
             </Grid>
-            {/* Doctor specific fields */}
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="bloodgroup-label">Blood Group</InputLabel>
+                <Select
+                  labelId="bloodgroup-label"
+                  id="bloodgroup-select"
+                  name="bloodGroup"
+                  value={profile.bloodGroup || ""}
+                  label="Blood Group"
+                  onChange={handleChange}
+                >
+                  <MenuItem value="">
+                    <em>Select Blood Group</em>
+                  </MenuItem>
+                  <MenuItem value="A+">A+</MenuItem>
+                  <MenuItem value="A-">A-</MenuItem>
+                  <MenuItem value="B+">B+</MenuItem>
+                  <MenuItem value="B-">B-</MenuItem>
+                  <MenuItem value="AB+">AB+</MenuItem>
+                  <MenuItem value="AB-">AB-</MenuItem>
+                  <MenuItem value="O+">O+</MenuItem>
+                  <MenuItem value="O-">O-</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
             {user && user.role === 'doctor' && (
               <>
                 <Grid item xs={12} sm={6}>

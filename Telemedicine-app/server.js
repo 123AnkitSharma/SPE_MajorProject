@@ -8,6 +8,9 @@ const appointmentRoutes = require('./routes/appointment');
 const userRoutes = require('./routes/user');
 const messageRoutes = require('./routes/message');
 const medicalRecordRoutes = require('./routes/medicalRecord'); // Add this line
+const reportRoutes = require('./routes/reports'); // Add this line
+const adminRoutes = require('./routes/admin'); // Add this line
+const availabilityRoutes = require('./routes/availability'); // Add this line
 const app = express();
 // Middlewares
 app.use(cors());
@@ -18,6 +21,9 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/medical-history', medicalRecordRoutes); // Add this line
+app.use('/api/reports', reportRoutes); // Add this line
+app.use('/api/admin', adminRoutes); // Add this line
+app.use('/api/availability', availabilityRoutes); // Add this line
 // DB Connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("Connected to MongoDB"))

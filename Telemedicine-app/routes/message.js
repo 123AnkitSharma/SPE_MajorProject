@@ -3,6 +3,8 @@ const router = express.Router();
 const Message = require('../models/Message');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const Appointment = require('../models/Appointment'); // Added Appointment model import
+
 // Auth middleware
 const auth = async (req, res, next) => {
   try {
@@ -14,23 +16,50 @@ const auth = async (req, res, next) => {
     res.status(401).json({ error: 'Authentication required' });
   }
 };
+
 // Send a message
 router.post('/', auth, async (req, res) => {
   try {
     const { recipient, content, appointment } = req.body;
-    // Create new message
+
+    // Add appointment validation for patients messaging doctors
+    const recipientUser = await User.findById(recipient);
+
+    // If a patient is messaging a doctor, validate they have an appointment
+    if (req.user.role === 'patient' && recipientUser && recipientUser.role === 'doctor') {
+      // Check if there's at least one appointment between them
+      const hasAppointment = await Appointment.exists({
+        patient: req.user.id,
+        doctor: recipient
+      });
+
+      if (!hasAppointment) {
+        return res.status(403).json({
+          error: 'You can only message doctors you have appointments with'
+        });
+      }
+    }
+
+    // Create new message if validation passes
     const message = new Message({
       sender: req.user.id,
       recipient,
       content,
       appointment
     });
+
     await message.save();
+
+    // Populate sender and recipient info for the response
+    await message.populate('sender', 'name role');
+    await message.populate('recipient', 'name role');
+
     res.status(201).json(message);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
+
 // Get conversation between two users
 router.get('/conversation/:userId', auth, async (req, res) => {
   try {
@@ -47,6 +76,7 @@ router.get('/conversation/:userId', auth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 // Get all conversations for a user
 router.get('/conversations', auth, async (req, res) => {
   try {
@@ -85,6 +115,7 @@ router.get('/conversations', auth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 // Mark messages as read
 router.put('/read/:senderId', auth, async (req, res) => {
   try {
@@ -97,4 +128,5 @@ router.put('/read/:senderId', auth, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 module.exports = router;

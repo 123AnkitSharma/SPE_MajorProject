@@ -9,6 +9,11 @@ import {
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import EmptyInboxIcon from '@mui/icons-material/Inbox';
+import DoctorIcon from '@mui/icons-material/LocalHospital';
+import { Link } from 'react-router-dom';
+
 export default function Messages() {
   const { doctorId } = useParams(); // Get doctor ID from URL if present
   const { user } = useAuth();
@@ -22,6 +27,7 @@ export default function Messages() {
   const [loadingDoctors, setLoadingDoctors] = useState(false);
   const [availableDoctors, setAvailableDoctors] = useState([]);
   const messagesEndRef = useRef(null);
+
   // Fetch all conversations
   useEffect(() => {
     const fetchConversations = async () => {
@@ -39,6 +45,7 @@ export default function Messages() {
     };
     fetchConversations();
   }, []);
+
   // Fetch available doctors if no conversations exist
   useEffect(() => {
     if (conversations.length === 0) {
@@ -46,7 +53,7 @@ export default function Messages() {
         try {
           setLoadingDoctors(true);
           const token = localStorage.getItem('token');
-          const res = await axios.get('http://localhost:5000/api/users/doctors', {
+          const res = await axios.get('http://localhost:5000/api/users/my-doctors', {
             headers: { Authorization: `Bearer ${token}` }
           });
           setAvailableDoctors(res.data);
@@ -59,6 +66,7 @@ export default function Messages() {
       fetchDoctors();
     }
   }, [conversations]);
+
   // If doctorId is provided in URL, select that doctor
   useEffect(() => {
     if (doctorId && conversations.length > 0) {
@@ -84,6 +92,7 @@ export default function Messages() {
       }
     }
   }, [doctorId, conversations]);
+
   // Fetch messages when selectedUser changes
   useEffect(() => {
     const fetchMessages = async () => {
@@ -111,12 +120,14 @@ export default function Messages() {
     };
     fetchMessages();
   }, [selectedUser]);
+
   // Scroll to bottom of messages
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !selectedUser) return;
@@ -149,6 +160,136 @@ export default function Messages() {
       setSending(false);
     }
   };
+
+  const renderEmptyState = () => {
+    return (
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          height: '100%',
+          padding: 4,
+          textAlign: 'center',
+          color: 'text.secondary'
+        }}
+      >
+        <EmptyInboxIcon sx={{ fontSize: 80, color: 'primary.light', mb: 2, opacity: 0.7 }} />
+        <Typography variant="h6">No messages yet</Typography>
+        <Typography variant="body2" sx={{ mt: 1, maxWidth: '80%' }}>
+          Start a conversation with one of your doctors to get medical advice and support
+        </Typography>
+      </Box>
+    );
+  };
+
+  const renderDoctorList = () => {
+    return (
+      <Box>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 'medium' }}>
+          Available Doctors
+        </Typography>
+        <List>
+          {availableDoctors.map(doctor => (
+            <Paper 
+              elevation={1} 
+              key={doctor._id} 
+              sx={{ mb: 2, borderRadius: 2, overflow: 'hidden' }}
+            >
+              <ListItem 
+                button 
+                onClick={() => setSelectedUser(doctor)}
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  p: 2 
+                }}
+              >
+                <ListItemAvatar>
+                  {doctor.profileImage ? (
+                    <Avatar 
+                      src={`http://localhost:5000/uploads/${doctor.profileImage}`} 
+                      alt={doctor.name} 
+                      sx={{ width: 50, height: 50 }} 
+                    />
+                  ) : (
+                    <Avatar 
+                      sx={{ 
+                        width: 50, 
+                        height: 50, 
+                        bgcolor: 'primary.main' 
+                      }}
+                    >
+                      {doctor.name.charAt(0)}
+                    </Avatar>
+                  )}
+                </ListItemAvatar>
+                <ListItemText 
+                  primary={
+                    <Typography variant="subtitle1" fontWeight="medium">
+                      Dr. {doctor.name}
+                    </Typography>
+                  } 
+                  secondary={
+                    <Typography variant="body2" color="text.secondary">
+                      {doctor.specialty || "General Medicine"}
+                    </Typography>
+                  } 
+                />
+                <DoctorIcon color="primary" sx={{ ml: 1 }} />
+              </ListItem>
+            </Paper>
+          ))}
+        </List>
+      </Box>
+    );
+  };
+
+  const renderMessage = (message) => {
+    const isOwn = message.sender._id === user?.id;
+    
+    return (
+      <Box
+        key={message._id}
+        sx={{
+          display: 'flex',
+          justifyContent: isOwn ? 'flex-end' : 'flex-start',
+          mb: 1.5
+        }}
+      >
+        {!isOwn && (
+          <Avatar 
+            src={selectedUser.profileImage ? `http://localhost:5000/uploads/${selectedUser.profileImage}` : null}
+            sx={{ mr: 1, mt: 0.5 }}
+          >
+            {selectedUser.name.charAt(0)}
+          </Avatar>
+        )}
+        <Paper
+          elevation={1}
+          sx={{
+            p: 1.5,
+            maxWidth: '70%',
+            borderRadius: 2,
+            backgroundColor: isOwn ? 'primary.light' : 'background.paper',
+            color: isOwn ? 'white' : 'text.primary'
+          }}
+        >
+          <Typography variant="body1">{message.content}</Typography>
+        </Paper>
+        {isOwn && (
+          <Avatar 
+            src={user?.profileImage ? `http://localhost:5000/uploads/${user.profileImage}` : null}
+            sx={{ ml: 1, mt: 0.5 }}
+          >
+            {user?.name?.charAt(0)}
+          </Avatar>
+        )}
+      </Box>
+    );
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
@@ -156,54 +297,129 @@ export default function Messages() {
       </Box>
     );
   }
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Messages
-      </Typography>
-      <Paper sx={{ height: '75vh', display: 'flex' }}>
+      <Paper 
+        elevation={3} 
+        sx={{ 
+          height: '80vh', 
+          display: 'flex',
+          overflow: 'hidden',
+          borderRadius: 2
+        }}
+      >
         {/* Conversations List */}
         <Box sx={{ 
-          width: '30%', 
+          width: { xs: selectedUser ? '0%' : '100%', sm: '35%', md: '30%' },
           borderRight: '1px solid #e0e0e0',
-          overflowY: 'auto' 
+          overflowY: 'auto',
+          display: { xs: selectedUser ? 'none' : 'block', sm: 'block' },
+          transition: 'all 0.3s ease',
+          bgcolor: '#f8f9fa'
         }}>
-          <List>
+          <Box sx={{ 
+            p: 2, 
+            borderBottom: '1px solid #e0e0e0', 
+            position: 'sticky',
+            top: 0,
+            bgcolor: 'primary.main',
+            color: 'white',
+            zIndex: 10
+          }}>
+            <Typography variant="h6" fontWeight="500">Messages</Typography>
+          </Box>
+          
+          <List disablePadding>
             {conversations.length === 0 ? (
               <Box sx={{ p: 2 }}>
-                <Typography variant="subtitle1" gutterBottom>
+                <Typography variant="subtitle1" gutterBottom fontWeight="500" color="text.primary">
                   No conversations yet
                 </Typography>
                 <Divider sx={{ my: 2 }} />
-                <Typography variant="subtitle2" gutterBottom>
-                  Available doctors:
-                </Typography>
-                {loadingDoctors ? (
-                  <CircularProgress size={20} sx={{ mt: 2 }} />
-                ) : (
+                
+                {user.role === 'patient' ? (
                   <>
-                    {availableDoctors.length > 0 ? (
-                      availableDoctors.map((doctor) => (
-                        <ListItem 
-                          key={doctor._id}
-                          button
-                          onClick={() => setSelectedUser(doctor)}
-                        >
-                          <ListItemAvatar>
-                            <Avatar>{doctor.name.charAt(0)}</Avatar>
-                          </ListItemAvatar>
-                          <ListItemText 
-                            primary={`Dr. ${doctor.name}`}
-                            secondary={doctor.profile?.specialization || "General Medicine"}
-                          />
-                        </ListItem>
-                      ))
+                    <Typography variant="subtitle2" gutterBottom color="text.secondary">
+                      Available doctors:
+                    </Typography>
+                    
+                    {loadingDoctors ? (
+                      <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                        <CircularProgress size={24} />
+                      </Box>
                     ) : (
-                      <Typography variant="body2" color="text.secondary">
-                        No doctors available. Book an appointment first.
-                      </Typography>
+                      <>
+                        {availableDoctors.length > 0 ? (
+                          renderDoctorList()
+                        ) : (
+                          <Box sx={{ 
+                            p: 3, 
+                            textAlign: 'center', 
+                            bgcolor: 'background.paper',
+                            borderRadius: 2,
+                            mx: 1,
+                            boxShadow: '0px 2px 4px rgba(0,0,0,0.05)'
+                          }}>
+                            <Typography variant="body1" fontWeight="500" color="text.secondary" gutterBottom>
+                              No doctors available
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" paragraph>
+                              You need to book an appointment with a doctor before you can message them.
+                            </Typography>
+                            <Button
+                              variant="contained"
+                              color="primary"
+                              component={Link}
+                              to="/book-appointment"
+                              startIcon={<CalendarTodayIcon />}
+                              sx={{ 
+                                mt: 1,
+                                borderRadius: 6,
+                                textTransform: 'none',
+                                boxShadow: 2,
+                                px: 3
+                              }}
+                            >
+                              Book an Appointment
+                            </Button>
+                          </Box>
+                        )}
+                      </>
                     )}
                   </>
+                ) : (
+                  <Box sx={{ 
+                    p: 3, 
+                    textAlign: 'center', 
+                    bgcolor: 'background.paper',
+                    borderRadius: 2,
+                    mx: 1,
+                    boxShadow: '0px 2px 4px rgba(0,0,0,0.05)'
+                  }}>
+                    <Typography variant="body1" fontWeight="500" color="text.secondary" gutterBottom>
+                      No patients available
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" paragraph>
+                      You don't have any patients yet. Patients will appear here after they book appointments with you.
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      component={Link}
+                      to="/dashboard"
+                      startIcon={<CalendarTodayIcon />}
+                      sx={{ 
+                        mt: 1,
+                        borderRadius: 6,
+                        textTransform: 'none',
+                        boxShadow: 2,
+                        px: 3
+                      }}
+                    >
+                      Go to Dashboard
+                    </Button>
+                  </Box>
                 )}
               </Box>
             ) : (
@@ -213,28 +429,83 @@ export default function Messages() {
                   button
                   selected={selectedUser && selectedUser._id === conv.partner._id}
                   onClick={() => setSelectedUser(conv.partner)}
-                  divider
+                  sx={{
+                    px: 2,
+                    py: 1.5,
+                    borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
+                    bgcolor: selectedUser && selectedUser._id === conv.partner._id ? 'rgba(25, 118, 210, 0.08)' : 'transparent',
+                    '&:hover': {
+                      bgcolor: selectedUser && selectedUser._id === conv.partner._id ? 'rgba(25, 118, 210, 0.12)' : 'rgba(0, 0, 0, 0.04)',
+                    }
+                  }}
                 >
                   <ListItemAvatar>
-                    <Badge color="error" badgeContent={conv.unreadCount} overlap="circular">
-                      <Avatar>{conv.partner.name.charAt(0)}</Avatar>
+                    <Badge 
+                      color="error" 
+                      badgeContent={conv.unreadCount} 
+                      overlap="circular"
+                      invisible={conv.unreadCount === 0}
+                      sx={{
+                        '& .MuiBadge-badge': {
+                          fontWeight: 'bold',
+                          minWidth: 18,
+                          height: 18,
+                          fontSize: 11
+                        }
+                      }}
+                    >
+                      <Avatar sx={{ bgcolor: conv.partner.role === 'doctor' ? 'primary.main' : 'secondary.main' }}>
+                        {conv.partner.name.charAt(0)}
+                      </Avatar>
                     </Badge>
                   </ListItemAvatar>
                   <ListItemText
-                    primary={`${conv.partner.role === 'doctor' ? 'Dr. ' : ''}${conv.partner.name}`}
-                    secondary={conv.lastMessage?.content?.substring(0, 30) + (conv.lastMessage?.content?.length > 30 ? '...' : '')}
-                    primaryTypographyProps={{ fontWeight: conv.unreadCount > 0 ? 'bold' : 'normal' }}
+                    primary={
+                      <Typography 
+                        variant="body1" 
+                        fontWeight={conv.unreadCount > 0 ? 600 : 400}
+                        sx={{ color: conv.unreadCount > 0 ? 'text.primary' : 'inherit' }}
+                      >
+                        {conv.partner.role === 'doctor' ? 'Dr. ' : ''}{conv.partner.name}
+                      </Typography>
+                    }
+                    secondary={
+                      <Typography 
+                        variant="body2" 
+                        color="text.secondary"
+                        noWrap
+                        sx={{ 
+                          fontWeight: conv.unreadCount > 0 ? 500 : 400,
+                          color: conv.unreadCount > 0 ? 'text.primary' : 'text.secondary' 
+                        }}
+                      >
+                        {conv.lastMessage?.content?.substring(0, 30) + (conv.lastMessage?.content?.length > 30 ? '...' : '')}
+                      </Typography>
+                    }
+                    secondaryTypographyProps={{ 
+                      component: 'div',
+                      sx: { 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between',
+                        mt: 0.3
+                      }
+                    }}
                   />
                 </ListItem>
               ))
             )}
           </List>
         </Box>
+        
         {/* Messages Area */}
         <Box sx={{ 
-          width: '70%', 
+          width: { xs: selectedUser ? '100%' : '0%', sm: '65%', md: '70%' },
           display: 'flex', 
-          flexDirection: 'column' 
+          flexDirection: 'column',
+          transition: 'all 0.3s ease',
+          position: 'relative',
+          bgcolor: '#ffffff'
         }}>
           {selectedUser ? (
             <>
@@ -243,60 +514,61 @@ export default function Messages() {
                 p: 2, 
                 borderBottom: '1px solid #e0e0e0',
                 display: 'flex',
-                alignItems: 'center'
+                alignItems: 'center',
+                bgcolor: 'white',
+                position: 'sticky',
+                top: 0,
+                zIndex: 2,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
               }}>
-                <IconButton onClick={() => setSelectedUser(null)} sx={{ mr: 1 }}>
+                <IconButton 
+                  onClick={() => setSelectedUser(null)} 
+                  sx={{ 
+                    mr: 1.5,
+                    display: { xs: 'flex', sm: 'none' }
+                  }}
+                >
                   <ArrowBackIcon />
                 </IconButton>
-                <Typography variant="h6">
-                  {selectedUser.role === 'doctor' ? 'Dr. ' : ''}{selectedUser.name}
-                </Typography>
+                <Avatar 
+                  sx={{ 
+                    mr: 1.5, 
+                    bgcolor: selectedUser.role === 'doctor' ? 'primary.main' : 'secondary.main',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  {selectedUser.name.charAt(0)}
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" fontWeight={500} sx={{ lineHeight: 1.2 }}>
+                    {selectedUser.role === 'doctor' ? 'Dr. ' : ''}{selectedUser.name}
+                  </Typography>
+                  {selectedUser.role === 'doctor' && (
+                    <Typography variant="caption" color="text.secondary">
+                      {selectedUser.profile?.specialization || 'Doctor'}
+                    </Typography>
+                  )}
+                </Box>
               </Box>
+              
               {/* Messages list */}
               <Box sx={{ 
                 flexGrow: 1, 
-                p: 2, 
+                p: 2.5, 
                 overflowY: 'auto',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                bgcolor: '#f5f7fb',
+                gap: 1,
               }}>
                 {messages.length > 0 ? (
-                  messages.map((message) => (
-                    <Box
-                      key={message._id}
-                      sx={{
-                        display: 'flex',
-                        justifyContent: message.sender._id === user.id ? 'flex-end' : 'flex-start',
-                        mb: 1
-                      }}
-                    >
-                      <Paper
-                        elevation={1}
-                        sx={{
-                          p: 1.5,
-                          maxWidth: '80%',
-                          bgcolor: message.sender._id === user.id ? '#e3f2fd' : '#f5f5f5',
-                          borderRadius: 2
-                        }}
-                      >
-                        <Typography variant="body1">
-                          {message.content}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </Typography>
-                      </Paper>
-                    </Box>
-                  ))
+                  messages.map((message) => renderMessage(message))
                 ) : (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                    <Typography color="text.secondary">
-                      No messages yet. Say hello!
-                    </Typography>
-                  </Box>
+                  renderEmptyState()
                 )}
                 <div ref={messagesEndRef} />
               </Box>
+              
               {/* Send message form */}
               <Box
                 component="form"
@@ -304,33 +576,68 @@ export default function Messages() {
                 sx={{
                   p: 2,
                   borderTop: '1px solid #e0e0e0',
-                  display: 'flex'
+                  display: 'flex',
+                  bgcolor: 'white',
+                  position: 'sticky',
+                  bottom: 0,
+                  zIndex: 2
                 }}
               >
                 <TextField
                   fullWidth
                   variant="outlined"
-                  placeholder="Type a message"
+                  placeholder="Type a message..."
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   disabled={sending}
                   autoComplete="off"
+                  multiline
+                  maxRows={4}
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '24px',
+                      bgcolor: '#f5f5f5',
+                      '&:hover': {
+                        bgcolor: '#f0f0f0',
+                      }
+                    }
+                  }}
                 />
                 <Button
                   type="submit"
                   variant="contained"
-                  endIcon={<SendIcon />}
+                  color="primary"
                   disabled={sending || !newMessage.trim()}
-                  sx={{ ml: 1 }}
+                  sx={{ 
+                    ml: 1, 
+                    borderRadius: '50%', 
+                    minWidth: 0, 
+                    width: 48, 
+                    height: 48,
+                    boxShadow: 2
+                  }}
                 >
-                  Send
+                  <SendIcon />
                 </Button>
               </Box>
             </>
           ) : (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-              <Typography color="text.secondary">
-                Select a conversation to start messaging
+            <Box sx={{ 
+              display: { xs: 'none', sm: 'flex' },
+              flexDirection: 'column',
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              height: '100%',
+              bgcolor: '#f8f8f8',
+              p: 4
+            }}>
+              <SendIcon sx={{ fontSize: 64, color: 'text.disabled', mb: 3, opacity: 0.3 }} />
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                Select a conversation
+              </Typography>
+              <Typography variant="body2" color="text.disabled" textAlign="center" sx={{ maxWidth: 300 }}>
+                Choose a doctor from the list to start or continue a conversation
               </Typography>
             </Box>
           )}

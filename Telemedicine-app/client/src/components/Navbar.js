@@ -15,6 +15,8 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import HomeIcon from '@mui/icons-material/Home'; // Add this import
+
 export default function Navbar() {
   const { user, logout } = useAuth();
   const [anchorElNav, setAnchorElNav] = useState(null);
@@ -39,12 +41,21 @@ export default function Navbar() {
       { label: 'My Profile', path: '/profile' }
     ],
     admin: [
-      { label: 'Dashboard', path: '/dashboard' },
+      { label: 'Dashboard', path: '/admin' },
       { label: 'Users', path: '/users' },
       { label: 'Reports', path: '/reports' }
     ]
   };
   const currentNavItems = user ? navItems[user.role] || [] : [];
+  
+  // Define public links that should be visible to all users
+  const publicLinks = [
+    { label: 'Home', path: user ? '/dashboard' : '/' }, // Add Home button
+    { label: 'About Us', path: '/about-us' },
+    { label: 'FAQs', path: '/faqs' },
+    { label: 'Contact Us', path: '#contact' }
+  ];
+  
   return (
     <AppBar position="static">
       <Container maxWidth="xl">
@@ -55,7 +66,7 @@ export default function Navbar() {
             variant="h6"
             noWrap
             component={Link}
-            to="/dashboard"
+            to={user ? "/dashboard" : "/"}
             sx={{
               mr: 2,
               display: { xs: 'none', md: 'flex' },
@@ -95,6 +106,15 @@ export default function Navbar() {
                 display: { xs: 'block', md: 'none' },
               }}
             >
+              {/* Add public links to mobile menu */}
+              {publicLinks.map((item) => (
+                <MenuItem key={item.path} onClick={() => {
+                  handleCloseNavMenu();
+                  navigate(item.path);
+                }}>
+                  <Typography textAlign="center">{item.label}</Typography>
+                </MenuItem>
+              ))}
               {user && currentNavItems.map((item) => (
                 <MenuItem key={item.path} onClick={() => {
                   handleCloseNavMenu();
@@ -116,7 +136,7 @@ export default function Navbar() {
             variant="h5"
             noWrap
             component={Link}
-            to="/dashboard"
+            to={user ? "/dashboard" : "/"}
             sx={{
               mr: 2,
               display: { xs: 'flex', md: 'none' },
@@ -141,6 +161,22 @@ export default function Navbar() {
               </Button>
             ))}
           </Box>
+          
+          {/* Public Links (Home, About Us, FAQs, Contact Us) in desktop view */}
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, mr: 2 }}>
+            {publicLinks.map((item) => (
+              <Button
+                key={item.path}
+                component={Link}
+                to={item.path}
+                sx={{ color: 'white' }}
+                startIcon={item.label === 'Home' ? <HomeIcon /> : null} // Add home icon to Home button
+              >
+                {item.label}
+              </Button>
+            ))}
+          </Box>
+          
           {/* User Menu */}
           {user ? (
             <Box sx={{ flexGrow: 0 }}>
@@ -150,7 +186,7 @@ export default function Navbar() {
               </Box>
             </Box>
           ) : (
-            <Button color="inherit" component={Link} to="/">Login</Button>
+            null
           )}
         </Toolbar>
       </Container>

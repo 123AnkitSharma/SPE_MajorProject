@@ -31,10 +31,19 @@ router.post('/login', async (req, res) => {
   try {
     const user = await User.findOne({ email });
     console.log('User found:', user ? 'Yes' : 'No');
+    
     if (!user) return res.status(400).json({ error: "User not found" });
+    
     const isMatch = await bcrypt.compare(password, user.password);
     console.log('Password match:', isMatch ? 'Yes' : 'No');
+    
     if (!isMatch) return res.status(400).json({ error: "Invalid credentials" });
+    
+    // Add status check before generating token
+    if (user.status === 'inactive') {
+      return res.status(403).json({ error: "Account is inactive. Please contact administrator." });
+    }
+    
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET);
     res.json({ token });
   } catch (err) {

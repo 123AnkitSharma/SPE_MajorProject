@@ -3,10 +3,21 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const router = express.Router();
+
 // Register
 router.post('/register', async (req, res) => {
   const { name, email, password, role, profile } = req.body;
   try {
+    // Prevent admin registration if an admin already exists
+    if (role === 'admin') {
+      const existingAdmin = await User.findOne({ role: 'admin' });
+      if (existingAdmin) {
+        return res.status(403).json({ 
+          error: "An admin already exists. Admin registration is not allowed." 
+        });
+      }
+    }
+
     const user = new User({ 
       name, 
       email, 
@@ -24,6 +35,7 @@ router.post('/register', async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+
 // Login
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
@@ -51,4 +63,5 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 module.exports = router;

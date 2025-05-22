@@ -230,12 +230,7 @@ export default function Messages() {
                     <Typography variant="subtitle1" fontWeight="medium">
                       Dr. {doctor.name}
                     </Typography>
-                  } 
-                  secondary={
-                    <Typography variant="body2" color="text.secondary">
-                      {doctor.specialty || "General Medicine"}
-                    </Typography>
-                  } 
+                  }
                 />
                 <DoctorIcon color="primary" sx={{ ml: 1 }} />
               </ListItem>

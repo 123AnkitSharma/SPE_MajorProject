@@ -11,15 +11,17 @@ import BookAppointment from './pages/BookAppointment';
 import Messages from './pages/Messages';
 import MedicalHistory from './pages/MedicalHistory';
 import PatientReports from './pages/PatientReports';
-import AdminDashboard from './pages/AdminDashboard'; // Import new admin components
+import AdminDashboard from './pages/AdminDashboard'; 
 import AdminUsers from './pages/AdminUsers';
 import AdminReports from './pages/AdminReports';
-import DoctorAppointments from './pages/DoctorAppointments'; // Import DoctorAppointments component
-import AboutUs from './pages/AboutUs'; // Import AboutUs component
-import FAQs from './pages/FAQs'; // Import FAQs component
-import HomePage from './pages/HomePage'; // Import HomePage component
+import DoctorAppointments from './pages/DoctorAppointments'; 
+import AboutUs from './pages/AboutUs'; 
+import FAQs from './pages/FAQs'; 
+import HomePage from './pages/HomePage'; 
+import Login from './pages/Login'; 
+import Register from './pages/Register'; 
 
-// Create a theme
+
 const theme = createTheme({
   palette: {
     primary: {
@@ -39,9 +41,8 @@ function AppContent() {
       <Navbar />
       <Routes>
         <Route path="/" element={<HomePage />} exact />
-        {/* Add these routes */}
-        <Route path="/login" element={<Auth />} />
-        <Route path="/register" element={<Auth isLogin={false} />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         {/* Protected routes for all authenticated users */}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />

@@ -9,7 +9,7 @@ import {
   Box
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ContactForm from '../components/ContactForm';  // Import the ContactForm component
+import ContactForm from '../components/ContactForm';
 
 export default function FAQs() {
   const [expanded, setExpanded] = useState(false);

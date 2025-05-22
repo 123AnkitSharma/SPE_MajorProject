@@ -2,14 +2,79 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   Container, Typography, Box, Paper, Grid, Card, CardContent,
-  List, ListItem, ListItemText, Divider, CircularProgress,
-  CardHeader, Button
+  List, ListItem, ListItemText, ListItemAvatar, Avatar, Divider, 
+  CircularProgress, CardHeader, Button, useTheme
 } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import { Link } from 'react-router-dom';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+import PersonIcon from '@mui/icons-material/Person';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import EventNoteIcon from '@mui/icons-material/EventNote';
+import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import AccountBoxIcon from '@mui/icons-material/AccountBox';
+
+// Styled components for enhanced visuals
+const DashboardHeader = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  padding: theme.spacing(3),
+  borderRadius: theme.spacing(2),
+  marginBottom: theme.spacing(3),
+  background: 'linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%)',
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  color: 'white',
+  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+}));
+
+const StyledCard = styled(Card)(({ theme }) => ({
+  height: '100%',
+  borderRadius: theme.spacing(2),
+  boxShadow: '0 8px 16px rgba(0,0,0,0.05)',
+  transition: 'transform 0.2s ease-in-out',
+  '&:hover': {
+    transform: 'translateY(-5px)',
+    boxShadow: theme.shadows[8],
+  }
+}));
+
+const StatCard = styled(Card)(({ theme, bgcolor }) => ({
+  height: '100%',
+  borderRadius: theme.spacing(2),
+  backgroundColor: bgcolor || theme.palette.primary.main,
+  color: 'white',
+  boxShadow: '0 6px 20px rgba(0,0,0,0.1)',
+  transition: 'transform 0.2s',
+  '&:hover': {
+    transform: 'translateY(-5px)',
+    boxShadow: '0 12px 28px rgba(0,0,0,0.15)',
+  }
+}));
+
+const ActionButton = styled(Button)(({ theme }) => ({
+  marginBottom: theme.spacing(1),
+  padding: theme.spacing(1.5, 0),
+  borderRadius: theme.spacing(1),
+  fontSize: '0.9rem',
+  fontWeight: 'bold',
+  transition: 'all 0.2s',
+  '&:hover': {
+    transform: 'translateY(-2px)',
+    boxShadow: theme.shadows[4],
+  },
+}));
+
+const ChartContainer = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(2),
+  borderRadius: theme.spacing(2),
+  boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+  height: '100%',
+}));
 
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
+  const theme = useTheme();
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeUsers: 0,
@@ -52,47 +117,62 @@ export default function AdminDashboard() {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>Admin Dashboard</Typography>
+      <DashboardHeader>
+        <Box sx={{ position: 'relative', zIndex: 1 }}>
+          <Typography variant="h4" fontWeight="bold" gutterBottom>
+            Admin Control Center
+          </Typography>
+          <Typography variant="subtitle1">
+            Monitor system performance, manage users, and analyze platform metrics
+          </Typography>
+        </Box>
+      </DashboardHeader>
       
       <Grid container spacing={3}>
         {/* Summary Cards */}
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>Total Users</Typography>
-              <Typography variant="h4">{stats.totalUsers}</Typography>
+        <Grid item xs={6} sm={3}>
+          <StatCard bgcolor="#3f51b5">
+            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+              <PersonIcon sx={{ fontSize: 40, mb: 1, opacity: 0.8 }} />
+              <Typography variant="h4" fontWeight="bold">{stats.totalUsers}</Typography>
+              <Typography variant="body2" sx={{ opacity: 0.8 }}>Total Users</Typography>
             </CardContent>
-          </Card>
+          </StatCard>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>Doctors</Typography>
-              <Typography variant="h4">{stats.doctors}</Typography>
+        <Grid item xs={6} sm={3}>
+          <StatCard bgcolor="#f50057">
+            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+              <MedicalServicesIcon sx={{ fontSize: 40, mb: 1, opacity: 0.8 }} />
+              <Typography variant="h4" fontWeight="bold">{stats.doctors}</Typography>
+              <Typography variant="body2" sx={{ opacity: 0.8 }}>Doctors</Typography>
             </CardContent>
-          </Card>
+          </StatCard>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>Patients</Typography>
-              <Typography variant="h4">{stats.patients}</Typography>
+        <Grid item xs={6} sm={3}>
+          <StatCard bgcolor="#00a152">
+            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+              <PersonIcon sx={{ fontSize: 40, mb: 1, opacity: 0.8 }} />
+              <Typography variant="h4" fontWeight="bold">{stats.patients}</Typography>
+              <Typography variant="body2" sx={{ opacity: 0.8 }}>Patients</Typography>
             </CardContent>
-          </Card>
+          </StatCard>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Typography color="textSecondary" gutterBottom>Appointments</Typography>
-              <Typography variant="h4">{stats.appointments}</Typography>
+        <Grid item xs={6} sm={3}>
+          <StatCard bgcolor="#ff9100">
+            <CardContent sx={{ textAlign: 'center', py: 3 }}>
+              <EventNoteIcon sx={{ fontSize: 40, mb: 1, opacity: 0.8 }} />
+              <Typography variant="h4" fontWeight="bold">{stats.appointments}</Typography>
+              <Typography variant="body2" sx={{ opacity: 0.8 }}>Appointments</Typography>
             </CardContent>
-          </Card>
+          </StatCard>
         </Grid>
         
-        {/* Users by Role Chart */}
+        {/* Charts Section */}
         <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-            <Typography variant="h6" gutterBottom>Users by Role</Typography>
+          <ChartContainer>
+            <Typography variant="h6" fontWeight="500" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+              <PersonIcon sx={{ mr: 1 }} /> Users by Role
+            </Typography>
             <Box sx={{ height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -114,13 +194,14 @@ export default function AdminDashboard() {
                 </PieChart>
               </ResponsiveContainer>
             </Box>
-          </Paper>
+          </ChartContainer>
         </Grid>
         
-        {/* Appointments by Status Chart */}
         <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-            <Typography variant="h6" gutterBottom>Appointments by Status</Typography>
+          <ChartContainer>
+            <Typography variant="h6" fontWeight="500" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+              <EventNoteIcon sx={{ mr: 1 }} /> Appointments by Status
+            </Typography>
             <Box sx={{ height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
@@ -130,50 +211,104 @@ export default function AdminDashboard() {
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="value" fill="#8884d8" />
+                  <Bar dataKey="value" fill="#8884d8" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </Box>
-          </Paper>
+          </ChartContainer>
         </Grid>
         
         {/* Recent Users */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 2 }}>
+        <Grid item xs={12} md={8}>
+          <ChartContainer>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Recent Users</Typography>
-              <Button component={Link} to="/users" variant="outlined" size="small">View All Users</Button>
+              <Typography variant="h6" fontWeight="500" sx={{ display: 'flex', alignItems: 'center' }}>
+                <PersonIcon sx={{ mr: 1 }} /> Recent Users
+              </Typography>
+              <Button 
+                component={Link} 
+                to="/users" 
+                variant="contained" 
+                size="small"
+                endIcon={<PersonIcon />}
+                sx={{ borderRadius: 2 }}
+              >
+                View All Users
+              </Button>
             </Box>
             <List>
               {stats.recentUsers.map((user) => (
-                <ListItem key={user._id} divider>
+                <ListItem key={user._id} divider sx={{ 
+                  py: 1.5,
+                  transition: 'background 0.2s',
+                  '&:hover': { bgcolor: 'rgba(0,0,0,0.03)' },
+                  borderRadius: 1
+                }}>
+                  <ListItemAvatar>
+                    <Avatar sx={{ 
+                      bgcolor: user.role === 'doctor' ? '#f50057' : 
+                               user.role === 'admin' ? '#3f51b5' : '#00a152'
+                    }}>
+                      {user.name.charAt(0)}
+                    </Avatar>
+                  </ListItemAvatar>
                   <ListItemText
-                    primary={user.name}
+                    primary={<Typography fontWeight="500">{user.name}</Typography>}
                     secondary={`${user.email} | ${user.role.charAt(0).toUpperCase() + user.role.slice(1)} | Created: ${new Date(user.createdAt).toLocaleDateString()}`}
                   />
                 </ListItem>
               ))}
             </List>
-          </Paper>
+          </ChartContainer>
         </Grid>
 
         {/* Quick Actions */}
         <Grid item xs={12} md={4}>
-          <Card>
-            <CardHeader title="Quick Actions" />
-            <Divider />
+          <StyledCard>
+            <CardHeader 
+              title="Quick Actions" 
+              sx={{ 
+                backgroundColor: theme.palette.primary.main, 
+                color: 'white',
+                borderTopLeftRadius: 16,
+                borderTopRightRadius: 16,
+              }} 
+            />
             <CardContent>
-              <Button fullWidth variant="outlined" sx={{ mb: 1 }} component={Link} to="/users">
+              <ActionButton 
+                fullWidth 
+                variant="contained" 
+                color="primary"
+                sx={{ mb: 2 }}
+                component={Link} 
+                to="/users"
+                startIcon={<ManageAccountsIcon />}
+              >
                 MANAGE USERS
-              </Button>
-              <Button fullWidth variant="outlined" sx={{ mb: 1 }} component={Link} to="/reports">
+              </ActionButton>
+              <ActionButton 
+                fullWidth 
+                variant="contained"
+                color="secondary" 
+                sx={{ mb: 2 }}
+                component={Link} 
+                to="/reports"
+                startIcon={<AssessmentIcon />}
+              >
                 VIEW REPORTS
-              </Button>
-              <Button fullWidth variant="outlined" component={Link} to="/profile">
+              </ActionButton>
+              <ActionButton 
+                fullWidth 
+                variant="contained"
+                color="info"
+                component={Link} 
+                to="/profile"
+                startIcon={<AccountBoxIcon />}
+              >
                 UPDATE PROFILE
-              </Button>
+              </ActionButton>
             </CardContent>
-          </Card>
+          </StyledCard>
         </Grid>
       </Grid>
     </Container>

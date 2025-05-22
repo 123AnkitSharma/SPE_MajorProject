@@ -121,20 +121,25 @@ export default function DoctorAppointments() {
     // First filter by tab (date)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
     const appointmentDate = new Date(app.date);
+    appointmentDate.setHours(0, 0, 0, 0); // Reset hours to ensure proper date comparison
     
     if (tabValue === 0) { // Today
-      if (appointmentDate < today || appointmentDate >= tomorrow) return false;
+      // Show only today's appointments
+      return appointmentDate.getTime() === today.getTime() && 
+             (statusFilter === 'all' || app.status === statusFilter);
     } else if (tabValue === 1) { // Upcoming
-      if (appointmentDate < tomorrow) return false;
+      // Show appointments with dates in the future
+      return appointmentDate.getTime() > today.getTime() && 
+             (statusFilter === 'all' || app.status === statusFilter);
     } else if (tabValue === 2) { // Past
-      if (appointmentDate >= today) return false;
+      // Show appointments with dates in the past
+      return appointmentDate.getTime() < today.getTime() && 
+             (statusFilter === 'all' || app.status === statusFilter);
     }
     
-    // Then filter by status
-    return statusFilter === 'all' || app.status === statusFilter;
+    // If no tab matches (shouldn't happen), return false
+    return false;
   });
 
   if (loading) {

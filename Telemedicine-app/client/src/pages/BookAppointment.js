@@ -208,135 +208,259 @@ export default function BookAppointment() {
     return !isDateAvailable(date);
   };
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 5 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Book an Appointment
-      </Typography>
-      <Paper sx={{ p: 3, mb: 4 }}>
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Typography variant="h6" gutterBottom>
-              Select Doctor
-            </Typography>
-          </Grid>
-          {doctors.length > 0 ? (
-            doctors.map((doctor) => (
-              <Grid item xs={12} sm={6} md={4} key={doctor._id}>
-                <Card 
-                  variant={selectedDoctor === doctor._id ? "outlined" : "elevation"}
-                  sx={{ 
-                    border: selectedDoctor === doctor._id ? '2px solid #1976d2' : 'none',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => setSelectedDoctor(doctor._id)}
-                >
-                  <CardContent>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <Avatar sx={{ width: 60, height: 60, mb: 2 }}>
-                        {doctor.name.charAt(0)}
-                      </Avatar>
-                      <Typography variant="h6">Dr. {doctor.name}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {doctor.profile?.specialization || 'General Medicine'}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                  <CardActions>
-                    <Button 
-                      size="small" 
-                      color="primary" 
-                      fullWidth
-                      variant={selectedDoctor === doctor._id ? "contained" : "text"}
-                    >
-                      {selectedDoctor === doctor._id ? 'Selected' : 'Select'}
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            ))
-          ) : (
-            <Grid item xs={12}>
-              <Typography>No doctors available at the moment</Typography>
-            </Grid>
-          )}
-        </Grid>
-      </Paper>
-      
-      {loadingAvailability && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 3 }}>
-          <CircularProgress size={24} />
-          <Typography sx={{ ml: 2 }}>Loading doctor's availability...</Typography>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 8 }}>
+      {/* Header Section */}
+      <Box sx={{ mb: 4, textAlign: 'center' }}>
+        <Typography variant="h4" component="h1" fontWeight="500" gutterBottom>
+          Book an Appointment
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Select a doctor, choose an available time slot and schedule your appointment
+        </Typography>
+      </Box>
+
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 8 }}>
+          <CircularProgress />
         </Box>
-      )}
-      
-      {selectedDoctor && !loadingAvailability && (
-        <Paper sx={{ p: 3 }}>
-          {doctorAvailability.length === 0 ? (
-            <Alert severity="info" sx={{ mb: 2 }}>
-              This doctor has not set their availability yet. Please select another doctor.
-            </Alert>
-          ) : (
-            <>
-              <Typography variant="h6" gutterBottom>
-                Select Date and Time
+      ) : (
+        <Grid container spacing={3}>
+          {/* Doctor Selection Panel */}
+          <Grid item xs={12} md={5}>
+            <Paper 
+              elevation={3} 
+              sx={{ 
+                p: 3, 
+                height: '100%',
+                borderRadius: 2,
+                position: 'relative'
+              }}
+            >
+              <Typography variant="h6" fontWeight="500" gutterBottom>
+                Select Doctor
               </Typography>
-              <Box component="form" onSubmit={handleSubmit}>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
-                    <LocalizationProvider dateAdapter={AdapterDateFns}>
-                      <DatePicker
-                        label="Appointment Date"
-                        value={selectedDate}
-                        onChange={setSelectedDate}
-                        shouldDisableDate={shouldDisableDate}
-                        minDate={new Date()}
-                        renderInput={(params) => <TextField {...params} fullWidth />}
-                      />
-                    </LocalizationProvider>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <FormControl fullWidth disabled={!selectedDate || availableTimeSlots.length === 0}>
-                      <InputLabel>Time Slot</InputLabel>
-                      <Select
-                        value={selectedTime}
-                        label="Time Slot"
-                        onChange={(e) => setSelectedTime(e.target.value)}
-                      >
-                        {availableTimeSlots.length > 0 ? (
-                          availableTimeSlots.map((time) => (
-                            <MenuItem key={time} value={time}>
-                              {time}
-                            </MenuItem>
-                          ))
-                        ) : (
-                          <MenuItem disabled>No available slots</MenuItem>
-                        )}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                </Grid>
-                <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    disabled={submitting || !selectedDate || !selectedTime || availableTimeSlots.length === 0}
-                  >
-                    {submitting ? 'Booking...' : 'Book Appointment'}
-                  </Button>
-                </Box>
+
+              <Box sx={{ mt: 2, maxHeight: '60vh', overflow: 'auto', pr: 1 }}>
+                {doctors.length > 0 ? (
+                  doctors.map((doctor) => (
+                    <Card 
+                      key={doctor._id}
+                      elevation={selectedDoctor === doctor._id ? 3 : 1}
+                      sx={{ 
+                        mb: 2, 
+                        borderRadius: 2,
+                        border: selectedDoctor === doctor._id ? '2px solid #1976d2' : '1px solid #eee',
+                        transition: 'all 0.2s ease',
+                        cursor: 'pointer',
+                        '&:hover': {
+                          boxShadow: 3,
+                          transform: 'translateY(-2px)'
+                        }
+                      }}
+                      onClick={() => setSelectedDoctor(doctor._id)}
+                    >
+                      <CardContent sx={{ p: 2 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Avatar 
+                            sx={{ 
+                              width: 60, 
+                              height: 60, 
+                              bgcolor: selectedDoctor === doctor._id ? 'primary.main' : 'grey.400',
+                              fontSize: '1.5rem'
+                            }}
+                          >
+                            {doctor.name.charAt(0)}
+                          </Avatar>
+                          <Box sx={{ ml: 2 }}>
+                            <Typography variant="h6" fontWeight="500">
+                              Dr. {doctor.name}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {doctor.profile?.specialization || 'General Medicine'}
+                            </Typography>
+                            {selectedDoctor === doctor._id && (
+                              <Box sx={{ mt: 1 }}>
+                                <Typography 
+                                  variant="caption" 
+                                  sx={{ 
+                                    bgcolor: 'primary.main', 
+                                    color: 'white', 
+                                    px: 1, 
+                                    py: 0.5, 
+                                    borderRadius: 1 
+                                  }}
+                                >
+                                  Selected
+                                </Typography>
+                              </Box>
+                            )}
+                          </Box>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <Box sx={{ textAlign: 'center', py: 4 }}>
+                    <Typography variant="body1" color="text.secondary">
+                      No doctors available at the moment
+                    </Typography>
+                  </Box>
+                )}
               </Box>
-            </>
-          )}
-        </Paper>
+            </Paper>
+          </Grid>
+
+          {/* Calendar and Time Selection Panel */}
+          <Grid item xs={12} md={7}>
+            <Paper 
+              elevation={3} 
+              sx={{ 
+                p: 3, 
+                borderRadius: 2,
+                minHeight: '50vh',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              {loadingAvailability ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+                  <CircularProgress size={30} />
+                  <Typography sx={{ ml: 2 }}>Loading doctor's availability...</Typography>
+                </Box>
+              ) : !selectedDoctor ? (
+                <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    Please select a doctor
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Doctor details and available time slots will appear here
+                  </Typography>
+                </Box>
+              ) : doctorAvailability.length === 0 ? (
+                <Box sx={{ p: 2, textAlign: 'center' }}>
+                  <Alert severity="info" sx={{ mb: 2 }}>
+                    This doctor has not set their availability yet. Please select another doctor.
+                  </Alert>
+                </Box>
+              ) : (
+                <Box component="form" onSubmit={handleSubmit} sx={{ height: '100%' }}>
+                  <Typography variant="h6" fontWeight="500" gutterBottom>
+                    Select Date and Time
+                  </Typography>
+                  
+                  <Grid container spacing={3} sx={{ mt: 1 }}>
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Appointment Date
+                      </Typography>
+                      <LocalizationProvider dateAdapter={AdapterDateFns}>
+                        <DatePicker
+                          value={selectedDate}
+                          onChange={setSelectedDate}
+                          shouldDisableDate={shouldDisableDate}
+                          minDate={new Date()}
+                          renderInput={(params) => <TextField {...params} fullWidth size="medium" />}
+                        />
+                      </LocalizationProvider>
+                      {selectedDate && (
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                          Available on {selectedDate.toDateString()}
+                        </Typography>
+                      )}
+                    </Grid>
+                    
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Preferred Time
+                      </Typography>
+                      <FormControl fullWidth disabled={!selectedDate || availableTimeSlots.length === 0}>
+                        <InputLabel>Select Time Slot</InputLabel>
+                        <Select
+                          value={selectedTime}
+                          label="Select Time Slot"
+                          onChange={(e) => setSelectedTime(e.target.value)}
+                        >
+                          {availableTimeSlots.length > 0 ? (
+                            availableTimeSlots.map((time) => (
+                              <MenuItem key={time} value={time}>
+                                {time}
+                              </MenuItem>
+                            ))
+                          ) : (
+                            <MenuItem disabled>No available slots</MenuItem>
+                          )}
+                        </Select>
+                      </FormControl>
+                      {availableTimeSlots.length > 0 && (
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                          {availableTimeSlots.length} time slots available
+                        </Typography>
+                      )}
+                    </Grid>
+                  </Grid>
+
+                  {/* Summary Section */}
+                  {selectedDate && selectedTime && (
+                    <Box sx={{ mt: 4, p: 2, bgcolor: 'primary.50', borderRadius: 2 }}>
+                      <Typography variant="subtitle1" gutterBottom>
+                        Appointment Summary
+                      </Typography>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={4}>
+                          <Typography variant="caption" color="text.secondary">
+                            Doctor
+                          </Typography>
+                          <Typography variant="body2" fontWeight="500">
+                            Dr. {doctors.find(d => d._id === selectedDoctor)?.name}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                          <Typography variant="caption" color="text.secondary">
+                            Date
+                          </Typography>
+                          <Typography variant="body2" fontWeight="500">
+                            {selectedDate?.toLocaleDateString()}
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                          <Typography variant="caption" color="text.secondary">
+                            Time
+                          </Typography>
+                          <Typography variant="body2" fontWeight="500">
+                            {selectedTime}
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  )}
+
+                  <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      size="large"
+                      disabled={submitting || !selectedDate || !selectedTime || availableTimeSlots.length === 0}
+                      sx={{ 
+                        px: 4, 
+                        py: 1.5, 
+                        borderRadius: 2,
+                        boxShadow: 2
+                      }}
+                    >
+                      {submitting ? (
+                        <>
+                          <CircularProgress size={20} sx={{ mr: 1, color: 'white' }} />
+                          Booking...
+                        </>
+                      ) : 'Book Appointment'}
+                    </Button>
+                  </Box>
+                </Box>
+              )}
+            </Paper>
+          </Grid>
+        </Grid>
       )}
       
       <Snackbar 
@@ -345,7 +469,12 @@ export default function BookAppointment() {
         onClose={handleCloseAlert}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={handleCloseAlert} severity={alert.severity}>
+        <Alert 
+          onClose={handleCloseAlert} 
+          severity={alert.severity} 
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
           {alert.message}
         </Alert>
       </Snackbar>

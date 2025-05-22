@@ -48,8 +48,7 @@ export default function ContactForm() {
     
     setSubmitting(true);
     
-    // Here you would typically send the form data to your backend
-    // For now, we'll just simulate a successful submission
+
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));

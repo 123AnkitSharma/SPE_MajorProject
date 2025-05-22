@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
-import HomeIcon from '@mui/icons-material/Home'; // Add this import
+import HomeIcon from '@mui/icons-material/Home';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -48,19 +48,19 @@ export default function Navbar() {
   };
   const currentNavItems = user ? navItems[user.role] || [] : [];
   
-  // Define public links that should be visible to all users
+  
   const publicLinks = [
-    { label: 'Home', path: user ? '/dashboard' : '/' }, // Add Home button
+    { label: 'Home', path: user ? '/dashboard' : '/' },
     { label: 'About Us', path: '/about-us' },
     { label: 'FAQs', path: '/faqs' },
     { label: 'Contact Us', path: '#contact' }
   ];
   
   return (
-    <AppBar position="static">
+    <AppBar position="static" className="navbar-large-text">
       <Container maxWidth="xl">
         <Toolbar disableGutters>
-          {/* Desktop Logo */}
+          {}
           <MedicalServicesIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} />
           <Typography
             variant="h6"
@@ -77,7 +77,7 @@ export default function Navbar() {
           >
             TeleMed
           </Typography>
-          {/* Mobile Menu */}
+          {}
           <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
             <IconButton
               size="large"
@@ -106,7 +106,7 @@ export default function Navbar() {
                 display: { xs: 'block', md: 'none' },
               }}
             >
-              {/* Add public links to mobile menu */}
+              {}
               {publicLinks.map((item) => (
                 <MenuItem key={item.path} onClick={() => {
                   handleCloseNavMenu();
@@ -130,7 +130,7 @@ export default function Navbar() {
               )}
             </Menu>
           </Box>
-          {/* Mobile Logo */}
+          {}
           <MedicalServicesIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} />
           <Typography
             variant="h5"
@@ -148,7 +148,7 @@ export default function Navbar() {
           >
             TeleMed
           </Typography>
-          {/* Desktop Menu Items */}
+          {}
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
             {user && currentNavItems.map((item) => (
               <Button
@@ -162,7 +162,7 @@ export default function Navbar() {
             ))}
           </Box>
           
-          {/* Public Links (Home, About Us, FAQs, Contact Us) in desktop view */}
+          {}
           <Box sx={{ display: { xs: 'none', md: 'flex' }, mr: 2 }}>
             {publicLinks.map((item) => (
               <Button
@@ -170,14 +170,14 @@ export default function Navbar() {
                 component={Link}
                 to={item.path}
                 sx={{ color: 'white' }}
-                startIcon={item.label === 'Home' ? <HomeIcon /> : null} // Add home icon to Home button
+                startIcon={item.label === 'Home' ? <HomeIcon /> : null}
               >
                 {item.label}
               </Button>
             ))}
           </Box>
           
-          {/* User Menu */}
+          {}
           {user ? (
             <Box sx={{ flexGrow: 0 }}>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>

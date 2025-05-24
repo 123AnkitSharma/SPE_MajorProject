@@ -1,0 +1,96 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('docker-hub-credentials')
+        VERSION = "${env.BUILD_NUMBER}"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scmGit(
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[url: 'https://github.com/123AnkitSharma/Kubernetes_project.git']]
+                )
+            }
+        }
+       
+        stage('Build Docker Images') {
+            steps {
+                dir('Telemedicine-app') {
+                    sh 'docker build -t ${DOCKERHUB_CREDENTIALS_USR}/telemedicine-backend:${VERSION} .'
+                    sh 'docker build -t ${DOCKERHUB_CREDENTIALS_USR}/telemedicine-frontend:${VERSION} ./client'
+                    
+                    // Also create latest tag
+                    sh 'docker tag ${DOCKERHUB_CREDENTIALS_USR}/telemedicine-backend:${VERSION} ${DOCKERHUB_CREDENTIALS_USR}/telemedicine-backend:latest'
+                    sh 'docker tag ${DOCKERHUB_CREDENTIALS_USR}/telemedicine-frontend:${VERSION} ${DOCKERHUB_CREDENTIALS_USR}/telemedicine-frontend:latest'
+                }
+            }
+        }
+        
+        stage('Push to DockerHub') {
+            steps {
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+                sh 'docker push ${DOCKERHUB_CREDENTIALS_USR}/telemedicine-backend:${VERSION}'
+                sh 'docker push ${DOCKERHUB_CREDENTIALS_USR}/telemedicine-frontend:${VERSION}'
+                sh 'docker push ${DOCKERHUB_CREDENTIALS_USR}/telemedicine-backend:latest'
+                sh 'docker push ${DOCKERHUB_CREDENTIALS_USR}/telemedicine-frontend:latest'
+            }
+        }
+        
+        stage('Setup Ansible & Deploy') {
+            steps {
+                withCredentials([string(credentialsId: 'ansible-vault-password', variable: 'VAULT_PASSWORD')]) {
+                    sh 'echo "$VAULT_PASSWORD" > Telemedicine-app/ansible/vault/.vault_password.txt'
+                    sh 'chmod 600 Telemedicine-app/ansible/vault/.vault_password.txt'
+                }
+                
+                // Use kubeconfig_latest file instead of kubernetes-config
+                withCredentials([file(credentialsId: 'kubeconfig_latest', variable: 'KUBECONFIG')]) {
+                    dir('Telemedicine-app') {
+                        sh 'ansible-playbook -i ansible/inventory ansible/deploy.yml --vault-password-file ansible/vault/.vault_password.txt -e "version=${VERSION}" -e "kubeconfig_path=$KUBECONFIG"'
+                    }
+                }
+            }
+        }
+        
+        stage('Cleanup') {
+            steps {
+                sh 'rm -f Telemedicine-app/ansible/vault/.vault_password.txt'
+                
+                // Remove current build images
+                sh 'docker rmi ${DOCKERHUB_CREDENTIALS_USR}/telemedicine-backend:${VERSION} || true'
+                sh 'docker rmi ${DOCKERHUB_CREDENTIALS_USR}/telemedicine-frontend:${VERSION} || true'
+                
+                // Keep only latest tag and 3 most recent versions
+                sh '''
+                    # Get all image IDs for backend except latest and 3 newest tags
+                    BACKEND_IMAGES=$(docker images ${DOCKERHUB_CREDENTIALS_USR}/telemedicine-backend --format "{{.ID}} {{.Tag}}" | grep -v latest | sort -k2nr | awk 'NR>3 {print $1}')
+                    
+                    # Get all image IDs for frontend except latest and 3 newest tags
+                    FRONTEND_IMAGES=$(docker images ${DOCKERHUB_CREDENTIALS_USR}/telemedicine-frontend --format "{{.ID}} {{.Tag}}" | grep -v latest | sort -k2nr | awk 'NR>3 {print $1}')
+                    
+                    # Remove old images
+                    for img in $BACKEND_IMAGES $FRONTEND_IMAGES; do
+                        docker rmi $img || true
+                    done
+                '''
+                
+                sh 'docker logout'
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo 'Deployment successful!'
+        }
+        failure {
+            echo 'Deployment failed!'
+        }
+        always {
+            cleanWs()
+        }
+    }
+}

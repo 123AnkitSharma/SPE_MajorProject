@@ -1,0 +1,114 @@
+---
+- name: Deploy Telemedicine App Infrastructure
+  hosts: local
+  become: false
+  vars_files:
+    - vault/secrets.yml
+  
+  tasks:
+    - name: Ensure kubectl is installed
+      command: which kubectl
+      register: kubectl_check
+      ignore_errors: true
+      
+    - name: Install kubectl if missing
+      shell: curl -LO "https://dl.k8s.io/release/stable.txt" && curl -LO "https://dl.k8s.io/$(cat stable.txt)/bin/linux/amd64/kubectl" && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+      when: kubectl_check.rc != 0
+
+    - name: Create temp directory for Kubernetes configs
+      file:
+        path: "/tmp/telemedicine-k8s"
+        state: directory
+        mode: '0755'
+        
+    # Copy K8s manifests
+    - name: Copy Kubernetes manifests
+      copy:
+        src: "{{ playbook_dir }}/../k8s/"
+        dest: "/tmp/telemedicine-k8s/"
+        mode: preserve
+        
+    # Create secrets for Kubernetes
+    - name: Create Kubernetes secrets file
+      template:
+        src: "{{ playbook_dir }}/templates/secrets.yaml.j2"
+        dest: "/tmp/telemedicine-k8s/secrets.yaml"
+        
+    # Apply secrets to Kubernetes
+    - name: Apply Kubernetes secrets
+      environment:
+        KUBECONFIG: "{{ kubeconfig_path }}"
+      command: kubectl apply -f /tmp/telemedicine-k8s/secrets.yaml
+
+    # Make deploy.sh executable
+    - name: Make deploy script executable
+      file:
+        path: "/tmp/telemedicine-k8s/deploy.sh"
+        mode: '0755'
+        
+    # Execute the Kubernetes deployment
+    - name: Deploy application with Kubernetes
+      environment:
+        KUBECONFIG: "{{ kubeconfig_path }}"
+      command: /tmp/telemedicine-k8s/deploy.sh
+      args:
+        chdir: "/tmp/telemedicine-k8s"
+    
+    # Deploy ELK Stack
+    - name: Create ELK monitoring namespace
+      environment:
+        KUBECONFIG: "{{ kubeconfig_path }}"
+      command: kubectl apply -f /tmp/telemedicine-k8s/elk-namespace.yaml
+      
+    - name: Deploy Elasticsearch
+      environment:
+        KUBECONFIG: "{{ kubeconfig_path }}"
+      command: kubectl apply -f /tmp/telemedicine-k8s/elasticsearch.yaml
+      
+    - name: Deploy Logstash
+      environment:
+        KUBECONFIG: "{{ kubeconfig_path }}"
+      command: kubectl apply -f /tmp/telemedicine-k8s/logstash.yaml
+      
+    - name: Deploy Kibana
+      environment:
+        KUBECONFIG: "{{ kubeconfig_path }}"
+      command: kubectl apply -f /tmp/telemedicine-k8s/kibana.yaml
+      
+    - name: Deploy Filebeat
+      environment:
+        KUBECONFIG: "{{ kubeconfig_path }}"
+      command: kubectl apply -f /tmp/telemedicine-k8s/filebeat.yaml
+      
+    - name: Deploy Metricbeat
+      environment:
+        KUBECONFIG: "{{ kubeconfig_path }}"
+      command: kubectl apply -f /tmp/telemedicine-k8s/metricbeat.yaml
+      
+    - name: Wait for ELK stack to be ready
+      environment:
+        KUBECONFIG: "{{ kubeconfig_path }}"
+      command: kubectl wait --for=condition=Available deployments --all -n elk-monitoring --timeout=180s
+      ignore_errors: true
+      
+    # Verify ELK stack deployment
+    - name: Verify ELK stack deployments
+      environment:
+        KUBECONFIG: "{{ kubeconfig_path }}"
+      command: kubectl get all -n elk-monitoring
+      register: elk_resources
+    
+    - name: Show ELK resources
+      debug:
+        var: elk_resources.stdout_lines
+      
+    # Verify deployment
+    - name: Verify Kubernetes deployments
+      environment:
+        KUBECONFIG: "{{ kubeconfig_path }}"
+      command: kubectl get pods -n telehealth
+      register: k8s_pods
+
+    - name: Show running pods
+      debug:
+        var: k8s_pods.stdout_lines
